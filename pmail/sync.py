@@ -1,6 +1,8 @@
 """One sync pass: Bridge -> archive. Safe to re-run; only new or changed mail is fetched."""
 
-from pmail import archive, bridge, message
+from datetime import date
+
+from pmail import archive, bridge, message, settings
 
 ALL_MAIL = "All Mail"
 SKIP_FOLDERS = {ALL_MAIL, "Starred"}  # Starred is a flag, not a place
@@ -34,6 +36,14 @@ def _flags(raw_flags) -> list[str]:
 
 def run(log=print) -> dict:
     state = archive.load_state()
+    if state.get("format") != archive.FORMAT_VERSION:
+        log("Email format changed; rebuilding every file.")
+        archive.clear_mail()
+        state = archive.empty_state()
+    since = settings.load()["since"]
+    if since != state.get("since"):
+        log(f"Date range: {'all mail' if since is None else 'from ' + since}.")
+        state["since"] = since
     messages: dict = state["messages"]  # short id -> metadata
     added = removed = updated = 0
 
@@ -48,7 +58,8 @@ def run(log=print) -> dict:
             state["uids"] = {}
             state["uidvalidity"] = uidvalidity
 
-        server_uids = client.search("ALL")
+        # Emails outside the date range drop out of server_uids and are removed below.
+        server_uids = client.search(["SINCE", date.fromisoformat(since)] if since else "ALL")
         flag_data = client.fetch(server_uids, [b"FLAGS"]) if server_uids else {}
         known = {int(uid): mid for uid, mid in state["uids"].items()}
         by_proton = {m["proton_id"]: m["id"] for m in messages.values()}
@@ -71,7 +82,7 @@ def run(log=print) -> dict:
                 added += 1
             log(f"  {min(start + BATCH, len(new_uids))}/{len(new_uids)}")
 
-        # Emails gone from All Mail were permanently deleted in Proton.
+        # Gone from All Mail (deleted in Proton) or now outside the date range.
         live_ids = {known[uid] for uid in server_uids}
         for mid in [mid for mid in messages if mid not in live_ids]:
             archive.remove_message(messages.pop(mid))

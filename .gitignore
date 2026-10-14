@@ -1,5 +1,6 @@
 # Mail data and anything personal never goes to GitHub
 archive/
+data/
 *.eml
 .env
 config.local.*

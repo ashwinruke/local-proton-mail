@@ -1,4 +1,4 @@
-"""Turn a raw RFC 822 message into plain metadata + readable text."""
+"""Turn a raw RFC 822 message into plain metadata + stripped text."""
 
 import email
 import email.policy
@@ -7,18 +7,9 @@ import hashlib
 import re
 from datetime import datetime, timezone
 
-import html2text
+from pmail import clean
 
-_html = html2text.HTML2Text()
-_html.body_width = 0
-_html.ignore_images = True
-_html.ignore_emphasis = True
-_html.protect_links = True
-_html.unicode_snob = True
-_html.ignore_tables = True  # layout tables in marketing mail; keep the cell text only
-
-# Invisible characters senders pad preview text with.
-_INVISIBLE = dict.fromkeys(map(ord, "\u034f\u00ad\u200b\u200c\u200d\u2060\ufeff\u2007\u00a0"), " ")
+_NOREPLY = re.compile(r"(no-?reply|do-?not-?reply|notifications?|mailer-daemon|newsletter|news|updates?)@", re.I)
 
 
 def short_id(internal_id: str) -> str:
@@ -65,18 +56,7 @@ def _body(msg) -> str:
             plain = _text_of(part)
         elif ctype == "text/html" and html is None:
             html = _text_of(part)
-    if plain and plain.strip():
-        text = plain
-    elif html:
-        text = _html.handle(html)
-    else:
-        text = ""
-    text = text.replace("\r\n", "\n").translate(_INVISIBLE)
-    text = re.sub(r"\[\s*\]\(<?[^)]*>?\)", "", text)  # links with no visible text
-    text = re.sub(r"^[\s|\-]*$", "", text, flags=re.M)  # leftover table rules
-    text = re.sub(r"[ \t]{2,}", " ", text)
-    text = re.sub(r"[ \t]+\n", "\n", text)
-    return re.sub(r"\n{3,}", "\n\n", text).strip()
+    return clean.clean_body(plain, html)
 
 
 def _attachments(msg) -> list[dict]:
@@ -95,6 +75,17 @@ def _attachments(msg) -> list[dict]:
             "part": index,
         })
     return out
+
+
+def is_bulk(msg) -> bool:
+    """Newsletters, marketing and automated notifications (skipped by the AI step)."""
+    if msg.get("List-Unsubscribe") or msg.get("List-Id"):
+        return True
+    if str(msg.get("Precedence", "")).lower() in ("bulk", "list", "junk"):
+        return True
+    if str(msg.get("Auto-Submitted", "no")).lower() != "no":
+        return True
+    return bool(_NOREPLY.search(str(msg.get("From", ""))))
 
 
 def _ids(value) -> list[str]:
@@ -117,6 +108,7 @@ def parse(raw: bytes, internal_date: datetime) -> tuple[dict, str]:
         "reply_to": _addresses(msg, "Reply-To"),
         "subject": str(msg.get("Subject") or "").strip(),
         "refs": _ids(msg.get("References")) + _ids(msg.get("In-Reply-To")),
+        "bulk": is_bulk(msg),
         "attachments": _attachments(msg),
     }
     return meta, _body(msg)

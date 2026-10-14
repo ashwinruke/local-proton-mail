@@ -1,0 +1,21 @@
+[project]
+name = "local-proton-mail"
+version = "0.1.0"
+description = "Local, AI-agent-ready copy of a Proton Mail account via Proton Mail Bridge"
+requires-python = ">=3.11"
+dependencies = [
+    "imapclient>=3.0",
+    "keyring>=25.0",
+    "html2text>=2024.2.26",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

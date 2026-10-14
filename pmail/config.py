@@ -9,6 +9,7 @@ KEYRING_SERVICE = "local-proton-mail"
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ARCHIVE_DIR = Path(os.environ.get("PMAIL_ARCHIVE", REPO_ROOT / "archive"))
+DATA_DIR = Path(os.environ.get("PMAIL_DATA", REPO_ROOT / "data"))
 
 BRIDGE_HOST = os.environ.get("PMAIL_BRIDGE_HOST", "127.0.0.1")
 BRIDGE_IMAP_PORT = int(os.environ.get("PMAIL_BRIDGE_IMAP_PORT", "1143"))

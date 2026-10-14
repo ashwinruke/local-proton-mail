@@ -3,7 +3,7 @@
 import argparse
 import getpass
 
-from pmail import bridge, config, sync
+from pmail import bridge, config, settings, sync
 
 
 def cmd_setup(args: argparse.Namespace) -> int:
@@ -34,11 +34,23 @@ def cmd_sync(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_range(args: argparse.Namespace) -> int:
+    if args.since is not None:
+        settings.save({"since": settings.parse_since(args.since)})
+    since = settings.load()["since"]
+    print(f"Keeping {'all mail' if since is None else 'emails from ' + since + ' on'}. "
+          "The next sync applies it.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pmail", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("setup", help="save Bridge credentials to this device's keychain").set_defaults(func=cmd_setup)
     sub.add_parser("check", help="connect to Bridge and list folders").set_defaults(func=cmd_check)
     sub.add_parser("sync", help="download new mail and update folders/flags").set_defaults(func=cmd_sync)
+    p = sub.add_parser("range", help="show or set which emails to keep: all, today or YYYY-MM-DD")
+    p.add_argument("since", nargs="?")
+    p.set_defaults(func=cmd_range)
     args = parser.parse_args(argv)
     return args.func(args)
