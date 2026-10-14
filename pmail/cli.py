@@ -3,7 +3,7 @@
 import argparse
 import getpass
 
-from pmail import bridge, config
+from pmail import bridge, config, sync
 
 
 def cmd_setup(args: argparse.Namespace) -> int:
@@ -27,10 +27,18 @@ def cmd_check(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sync(args: argparse.Namespace) -> int:
+    result = sync.run()
+    print(f"Done. {result['added']} new, {result['updated']} changed, {result['removed']} deleted. "
+          f"{result['total']} emails in {config.ARCHIVE_DIR}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pmail", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("setup", help="save Bridge credentials to this device's keychain").set_defaults(func=cmd_setup)
     sub.add_parser("check", help="connect to Bridge and list folders").set_defaults(func=cmd_check)
+    sub.add_parser("sync", help="download new mail and update folders/flags").set_defaults(func=cmd_sync)
     args = parser.parse_args(argv)
     return args.func(args)

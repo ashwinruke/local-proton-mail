@@ -19,11 +19,14 @@ holds the tool. Each device builds its own copy from Bridge.
 3. Save the Bridge IMAP credentials to this device's keychain:
    `python -m pmail setup`
 4. Test the connection: `python -m pmail check`
+5. Download your mail: `python -m pmail sync` (re-run any time; only changes are fetched)
+
+Agents: see `archive/README.md` for the layout of the mail files.
 
 ## Status
 
 - [x] Phase 1: Bridge connection and credentials
-- [ ] Phase 2: full download to `archive/`
+- [x] Phase 2: full download to `archive/` (`python -m pmail sync`)
 - [ ] Phase 3: live sync while running
 - [ ] Phase 4: attachments on demand
 - [ ] Phase 5: drafts written by agents (never sent)
