@@ -1,0 +1,10 @@
+# Mail data and anything personal never goes to GitHub
+archive/
+*.eml
+.env
+config.local.*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
