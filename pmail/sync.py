@@ -35,6 +35,8 @@ def _flags(raw_flags) -> list[str]:
 
 
 def run(log=print) -> dict:
+    if warning := archive.cloud_synced_warning():
+        log(warning)
     state = archive.load_state()
     if state.get("format") != archive.FORMAT_VERSION:
         log("Email format changed; rebuilding every file.")

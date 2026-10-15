@@ -49,8 +49,13 @@ def strip_tracking(url: str) -> str:
     return urlunsplit(parts._replace(query=urlencode(query, doseq=True)))
 
 
-def _link(match: re.Match) -> str:
-    text, url = match.group(1).strip(), strip_tracking(match.group(2).strip())
+_LINK_TAIL = re.compile(r"\]\(<?((?:https?|mailto):[^)>\s]+)>?(?:\s+\"[^\"]*\")?\)")
+
+
+def _format_link(text: str, url: str) -> str:
+    text, url = text.strip(), strip_tracking(url.strip())
+    while text.startswith("[") and text.endswith("]"):
+        text = text[1:-1].strip()
     if not text:
         return ""
     if text.rstrip("/") == url.rstrip("/") or text == url.split("://", 1)[-1].rstrip("/"):
@@ -58,15 +63,35 @@ def _link(match: re.Match) -> str:
     return f"{text} ({url})"
 
 
+def flatten_links(text: str) -> str:
+    """Rewrite markdown links `[text](url)` as `text (url)`.
+
+    Brackets are matched by counting, so link text may itself contain brackets
+    or other links (job cards and product tiles nest them).
+    """
+    start = 0
+    while match := _LINK_TAIL.search(text, start):
+        depth, i = 0, match.start() - 1
+        while i >= 0:
+            if text[i] == "]":
+                depth += 1
+            elif text[i] == "[":
+                if depth == 0:
+                    break
+                depth -= 1
+            i -= 1
+        if i < 0:  # no opening bracket: not a link
+            start = match.end()
+            continue
+        replacement = _format_link(text[i + 1:match.start()], match.group(1))
+        text = text[:i] + replacement + text[match.end():]
+        start = i  # rescan from here; an enclosing link may now be complete
+    return text
+
+
 def html_to_text(html: str) -> str:
     md = _converter().handle(html)
     md = re.sub(r"!\[[^\]]*\]\(<?[^)>]*>?\)", "", md)  # any image html2text kept
-    # Innermost links first; repeat for links wrapped around other links (job cards, product tiles).
-    link = re.compile(r"\[([^\[\]]*)\]\(<?([^)>\s]+)>?(?:\s+\"[^\"]*\")?\)")
-    while True:
-        md, count = link.subn(_link, md)
-        if not count:
-            break
     md = re.sub(r"<(https?://[^>\s]+)>", lambda m: strip_tracking(m.group(1)), md)
     md = re.sub(r"^\s{0,3}#{1,6}\s*", "", md, flags=re.M)  # heading markers
     md = re.sub(r"^(\s*)[*+]\s+", r"\1- ", md, flags=re.M)  # bullets
@@ -121,6 +146,7 @@ def clean_body(plain: str | None, html: str | None) -> str:
     else:
         return ""
     text = text.replace("\r\n", "\n").replace("\r", "\n").translate(_INVISIBLE)
+    text = flatten_links(text)  # plain-text parts use markdown links too (LinkedIn, newsletters)
     text = re.sub(r"https?://[^\s<>()\"']+", lambda m: strip_tracking(m.group(0)), text)
     text = strip_quoted(text)
     text = strip_signature(text)  # before tidy, which would drop the "--" delimiter

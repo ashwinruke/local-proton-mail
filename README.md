@@ -56,6 +56,7 @@ The rules live in `pmail/clean.py` with tests in `tests/test_clean.py`.
 
 - [x] Phase 1: Bridge connection and credentials
 - [x] Phase 2: download, stripping, date range, tests and CI
+- [x] Phase 2b: agent safety rules, repo guards (no mail, secrets or sending code in the repo)
 - [ ] Phase 3: live sync while running
 - [ ] Phase 4: attachments on demand
 - [ ] Phase 5: drafts written by agents (never sent)

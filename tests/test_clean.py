@@ -74,3 +74,21 @@ def test_links_wrapped_around_links_are_flattened():
 
 def test_bold_markers_in_plain_text_are_removed():
     assert clean_body("Your **new** score", None) == "Your new score"
+
+
+def test_link_text_containing_brackets_and_nested_links():
+    html = '<a href="https://jobs.example/2">[US] Customer Success Manager</a>'
+    assert clean_body(None, html) == "[US] Customer Success Manager (https://jobs.example/2)"
+    plain = "[ [ [US] Manager ](https://jobs.example/2)\nRemote ](https://feed.example/9)"
+    text = clean_body(plain, None)
+    assert "](" not in text
+    assert "[US] Manager (https://jobs.example/2)" in text
+
+
+def test_markdown_links_in_plain_text_parts_are_flattened():
+    plain = "You are subscribed.\n[Unsubscribe](<https://www.example.com/unsub?id=1&utm_campaign=x>)"
+    assert clean_body(plain, None) == "You are subscribed.\nUnsubscribe (https://www.example.com/unsub?id=1)"
+
+
+def test_double_bracket_button_text():
+    assert clean_body("[[Watch the video]](https://v.example/1)", None) == "Watch the video (https://v.example/1)"
