@@ -29,9 +29,10 @@ decide what goes, per question.
 ## Set up a device (Windows or macOS)
 
 1. Install [Proton Mail Bridge](https://proton.me/mail/bridge) and sign in.
-2. Install [uv](https://docs.astral.sh/uv/) and, for free local summaries, [Ollama](https://ollama.com/download)
-   with a model: `ollama pull qwen2.5:7b`.
+2. Have Python 3.11+ installed. For free local summaries, install [Ollama](https://ollama.com/download)
+   and a model: `ollama pull qwen2.5:7b`.
 3. Clone this repo and double-click **`Start.bat`** (Windows) or **`Start.command`** (macOS).
+   The first run sets everything up by itself (using [uv](https://docs.astral.sh/uv/) if you have it).
 4. The page opens at http://127.0.0.1:7861. Paste the IMAP username and password from
    Bridge (Mailbox details), pick a date range, and leave it running while you work.
 
@@ -39,18 +40,20 @@ While it runs, new INBOX mail arrives within seconds, a full pass every few minu
 picks up moves, deletes and label changes, and personal conversations are summarized
 one by one in the background.
 
-### Commands (for terminals and agents)
+### Commands (for terminals and AI agents)
+
+Run from the repo folder: `pmail.cmd <command>` on Windows, `./pmail.sh <command>` on macOS.
+Each sets itself up on first use.
 
 ```
-uv run python -m pmail start                     # run in the background (no window)
-uv run python -m pmail status                    # running? what is it doing?
-uv run python -m pmail stop
-uv run python -m pmail sync                      # one sync pass
-uv run python -m pmail watch                     # live sync without the page
-uv run python -m pmail summarize [--limit N]     # summarize pending conversations
-uv run python -m pmail range today|all|YYYY-MM-DD
-uv run python -m pmail fetch-attachment <id> "<name>"
-uv run python -m pmail draft --reply <id> --body "..."   # saved to Proton Drafts, never sent
+pmail start                          # run in the background, no window
+pmail status                         # running? what is it doing?
+pmail stop
+pmail sync                           # one sync pass
+pmail summarize [--limit N]          # summarize pending conversations now
+pmail range today|all|YYYY-MM-DD     # which emails to keep
+pmail fetch-attachment <id> "<name>"
+pmail draft --reply <id> --body "..."   # saved to Proton Drafts, never sent
 ```
 
 Agents: see `archive/AGENTS.md` for the layout and the safety rules.
