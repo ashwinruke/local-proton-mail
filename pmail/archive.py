@@ -6,7 +6,7 @@ import re
 import shutil
 from pathlib import Path
 
-from pmail import config
+from pmail import config, message
 
 SEPARATOR = "\n---\n"
 # Bump when the file format or the stripping rules change; the next sync rebuilds every file.
@@ -200,6 +200,50 @@ def remove_message(meta: dict) -> None:
     path.unlink(missing_ok=True)
 
 
+_AUTO_LOCAL = re.compile(
+    r"no-?reply|do-?not-?reply|auto-?reply|notifications?|alerts?|shipment|tracking|billing|invoices?|receipts?"
+    r"|statements?|security|verif|accounts?|^help|support|^info|deals|offers|newsletter|^news|marketing|updates?"
+    r"|mailer-daemon|^system|orders?|apply|^hello$|^team$|^login$|^recovery", re.I)
+_AUTO_DOMAIN = re.compile(r"^(e?mails?|em|e|news|notifications?|notify|mailer|marketing|comms|ecrmemail|send|bounce|"
+                          r"info|reply|engage|go|hello)\d*\.", re.I)
+FREQUENT_SENDER = 8  # one-way senders this frequent are automated
+
+
+def _addr(value: str) -> str:
+    match = re.search(r"<([^>]+)>", value)
+    return (match.group(1) if match else value).strip().lower()
+
+
+def classify(messages: dict) -> None:
+    """Mark newsletters, notifications, receipts and other automated mail as bulk.
+
+    Anyone the owner has written to (or who writes from the owner's addresses) is
+    never bulk. Everyone else is bulk if the mail has list headers or
+    unsubscribe text, comes from an automated-looking address, or is a frequent
+    sender the owner never replies to.
+    """
+    owner = {_addr(f) for m in messages.values() if "Sent" in m["folders"] for f in m["from"]}
+    contacts = {_addr(a) for m in messages.values() if any(_addr(f) in owner for f in m["from"])
+                for a in m["to"] + m["cc"]} - owner
+    counts: dict[str, int] = {}
+    for meta in messages.values():
+        if meta["from"]:
+            counts[_addr(meta["from"][0])] = counts.get(_addr(meta["from"][0]), 0) + 1
+    for meta in messages.values():
+        meta.setdefault("bulk_headers", meta.get("bulk", False))
+        if "unsub" not in meta:
+            path = config.ARCHIVE_DIR / meta["path"]
+            body = path.read_text(encoding="utf-8").partition(SEPARATOR)[2] if path.exists() else ""
+            meta["unsub"] = message.has_unsubscribe(body)
+        sender = _addr(meta["from"][0]) if meta["from"] else ""
+        local, _, domain = sender.partition("@")
+        if sender in owner or sender in contacts:
+            meta["bulk"] = False
+        else:
+            meta["bulk"] = bool(meta["bulk_headers"] or meta["unsub"] or _AUTO_LOCAL.search(local)
+                                or _AUTO_DOMAIN.match(domain) or counts.get(sender, 0) >= FREQUENT_SENDER)
+
+
 def assign_threads(messages: dict) -> None:
     """Group messages into conversations using Message-Id / References / In-Reply-To.
 
@@ -236,7 +280,7 @@ def write_indexes(messages: dict) -> None:
     index_lines = []
     threads: dict[str, list[dict]] = {}
     for meta in ordered:
-        row = {k: v for k, v in meta.items() if k not in ("proton_id", "refs")}
+        row = {k: v for k, v in meta.items() if k not in ("proton_id", "refs", "bulk_headers", "unsub")}
         index_lines.append(json.dumps(row, ensure_ascii=False))
         threads.setdefault(meta["thread"], []).append(meta)
 

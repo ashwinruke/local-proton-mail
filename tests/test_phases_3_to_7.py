@@ -139,3 +139,23 @@ def test_status_text_for_agents():
                "counts": {"emails": 10, "summarized": 2, "threads": 3}, "archive": "/tmp/archive"}
     text = control.describe(running)
     assert "live, watching for new mail" in text and "2 of 3" in text
+
+
+def test_classify_keeps_people_you_write_to_and_flags_automated_mail():
+    def m(mid, sender, folders=("INBOX",), to=("Alex <alex@example.com>",), body="Hi"):
+        meta = _msg(mid, mid, "2026-10-01T09:00+00:00", folders=folders, body=body)
+        meta.update({"from": [sender], "to": list(to)})
+        meta.pop("unsub", None)
+        return meta
+    msgs = {x["id"]: x for x in [
+        m("s1", "Alex <alex@example.com>", folders=("Sent",), to=("Glen <glen@example.org>",)),
+        m("g1", "Glen <glen@example.org>", body="Thanks! To unsubscribe from my jokes, just ask."),
+        m("n1", "Shop <deals@shop.example.com>"),
+        m("t1", "Track <tracking@carrier.example.com>"),
+        m("u1", "Promo <hi@brand.example.com>", body="Big sale. Unsubscribe here."),
+        m("r1", "Recruiter <sam@agency.example.com>", body="Are you open to a new role?"),
+    ]}
+    for i in range(8):
+        msgs[f"w{i}"] = m(f"w{i}", "Store <help@store.example.com>")
+    archive.classify(msgs)
+    assert {k for k, v in msgs.items() if not v["bulk"]} == {"s1", "g1", "r1"}

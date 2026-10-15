@@ -12,6 +12,14 @@ from pmail import clean
 _NOREPLY = re.compile(r"(no-?reply|do-?not-?reply|notifications?|mailer-daemon|newsletter|news|updates?)@", re.I)
 
 
+_UNSUB = re.compile(r"unsubscribe|opt[- ]out|manage (your )?(email |notification )?(preferences|subscriptions|settings)"
+                    r"|email preferences|you are receiving (this|these)", re.I)
+
+
+def has_unsubscribe(body: str) -> bool:
+    return bool(_UNSUB.search(body))
+
+
 def short_id(internal_id: str) -> str:
     """Stable 12-char id derived from Proton's internal message id."""
     return hashlib.sha1(internal_id.encode()).hexdigest()[:12]
@@ -109,6 +117,9 @@ def parse(raw: bytes, internal_date: datetime) -> tuple[dict, str]:
         "subject": str(msg.get("Subject") or "").strip(),
         "refs": _ids(msg.get("References")) + _ids(msg.get("In-Reply-To")),
         "bulk": is_bulk(msg),
+        "bulk_headers": is_bulk(msg),
         "attachments": _attachments(msg),
     }
-    return meta, _body(msg)
+    body = _body(msg)
+    meta["unsub"] = has_unsubscribe(body)
+    return meta, body

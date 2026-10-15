@@ -38,7 +38,7 @@ decide what goes, per question.
 
 While it runs, new INBOX mail arrives within seconds, a full pass every few minutes
 picks up moves, deletes and label changes, and personal conversations are summarized
-one by one in the background.
+one by one in the background (newsletters, receipts, notifications and other automated mail are skipped; anyone you have written to always counts as personal).
 
 ### Commands (for terminals and AI agents)
 

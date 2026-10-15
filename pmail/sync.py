@@ -99,6 +99,7 @@ def _run(log) -> dict:
         flags_by_id = {known[uid]: _flags(d[b"FLAGS"]) for uid, d in flag_data.items()}
         membership = _folder_membership(client, [f for f in folders if f not in SKIP_FOLDERS])
 
+    archive.classify(messages)
     archive.assign_threads(messages)
     for mid, meta in messages.items():
         meta["folders"] = sorted(membership.get(meta["proton_id"], []))
