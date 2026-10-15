@@ -28,13 +28,29 @@ decide what goes, per question.
 
 ## Set up a device (Windows or macOS)
 
-1. Install Proton Mail Bridge and sign in to your Proton account.
-2. Install [uv](https://docs.astral.sh/uv/), clone this repo and run `uv sync` inside it.
-3. Save the Bridge IMAP credentials to this device's keychain: `uv run python -m pmail setup`
-4. Optional, pick a date range: `uv run python -m pmail range today` (or `all`, or `2026-01-01`)
-5. Download and strip your mail: `uv run python -m pmail sync` (re-run any time; only changes are fetched)
+1. Install [Proton Mail Bridge](https://proton.me/mail/bridge) and sign in.
+2. Install [uv](https://docs.astral.sh/uv/) and, for free local summaries, [Ollama](https://ollama.com/download)
+   with a model: `ollama pull qwen2.5:7b`.
+3. Clone this repo and double-click **`Start.bat`** (Windows) or **`Start.command`** (macOS).
+4. The page opens at http://127.0.0.1:7861. Paste the IMAP username and password from
+   Bridge (Mailbox details), pick a date range, and leave it running while you work.
 
-Agents: see `archive/README.md` for the layout of the mail files.
+While it runs, new INBOX mail arrives within seconds, a full pass every few minutes
+picks up moves, deletes and label changes, and personal conversations are summarized
+one by one in the background.
+
+### Commands (for terminals and agents)
+
+```
+uv run python -m pmail sync                      # one sync pass
+uv run python -m pmail watch                     # live sync without the page
+uv run python -m pmail summarize [--limit N]     # summarize pending conversations
+uv run python -m pmail range today|all|YYYY-MM-DD
+uv run python -m pmail fetch-attachment <id> "<name>"
+uv run python -m pmail draft --reply <id> --body "..."   # saved to Proton Drafts, never sent
+```
+
+Agents: see `archive/AGENTS.md` for the layout and the safety rules.
 
 ## How emails are stripped, and why
 
@@ -52,11 +68,35 @@ or putting mail into a RAG index.
 
 The rules live in `pmail/clean.py` with tests in `tests/test_clean.py`.
 
+## AI summaries
+
+Each personal conversation gets a title, short summary, category, action items and
+the people, dates and amounts it mentions, in `archive/ai/<thread>.json` and
+`threads.jsonl`. Newsletters, notifications, spam and trash are skipped.
+
+- Runs on your machine with [Ollama](https://ollama.com); nothing leaves the computer.
+- The model gets no tools: email text in, fixed JSON out. Instructions hidden in an
+  email have nothing to act on.
+- On a laptop CPU expect a minute or two per conversation; the backlog is worked
+  through newest first and resumes where it left off. Smaller models are faster.
+
+## Security
+
+- Listens on 127.0.0.1 only; rejects other Host headers (DNS rebinding) and any change
+  that doesn't come from its own page with an `X-Pmail` header.
+- The Bridge password lives in the OS keychain, never in a file.
+- No code that can send email exists in this repo; CI fails if any appears, or if
+  mail, settings, real addresses or keys are ever committed.
+- Your local copy is plain text: use full-disk encryption (BitLocker / FileVault) and
+  keep it out of cloud-synced folders (the tool warns if it isn't).
+
 ## Status
 
-- [x] Phase 1: Bridge connection and credentials
-- [x] Phase 2: download, stripping, date range, tests and CI
-- [x] Phase 2b: agent safety rules, repo guards (no mail, secrets or sending code in the repo)
-- [ ] Phase 3: live sync while running
-- [ ] Phase 4: attachments on demand
-- [ ] Phase 5: drafts written by agents (never sent)
+- [x] Bridge connection, download, stripping, date range
+- [x] Agent safety rules and repo guards
+- [x] Local AI summaries (Ollama)
+- [x] Local page with Start.bat / Start.command
+- [x] Live sync while running
+- [x] Attachments on demand
+- [x] Drafts written by agents (never sent)
+- [ ] Claude API as an optional summary engine

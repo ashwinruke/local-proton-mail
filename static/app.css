@@ -1,0 +1,41 @@
+:root {
+  --bg: #f6f6f8; --card: #ffffff; --text: #1d1d22; --muted: #6b6b76; --border: #e2e2e8;
+  --accent: #6d4aff; --ok: #1f9d55; --warn: #b7791f; --err: #c53030;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16161a; --card: #1f1f25; --text: #ececf1; --muted: #9a9aa6; --border: #2f2f38;
+    --accent: #8b6dff; --ok: #48bb78; --warn: #ecc94b; --err: #fc8181;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header, main { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+header { padding-top: 28px; }
+h1 { margin: 0; font-size: 24px; }
+h2 { margin: 0 0 8px; font-size: 16px; }
+.sub, .muted { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 16px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.grid .card { margin: 0; }
+.grid { margin: 16px 0; }
+.big { font-size: 28px; font-weight: 600; margin: 0; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.dot.ok { background: var(--ok); } .dot.busy { background: var(--accent); } .dot.err { background: var(--err); }
+button { background: var(--accent); color: #fff; border: 0; border-radius: 7px; padding: 8px 14px; font: inherit; cursor: pointer; }
+button.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+label { display: block; margin: 8px 0; }
+label.inline { margin: 4px 0; }
+input, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; }
+input[type=radio] { padding: 0; }
+input.short { width: 70px; }
+fieldset { border: 1px solid var(--border); border-radius: 8px; margin: 0 0 12px; padding: 8px 12px; }
+legend { color: var(--muted); padding: 0 4px; }
+.msg { margin-left: 8px; color: var(--muted); }
+.banner { border-radius: 8px; padding: 10px 14px; margin: 16px 0; }
+.banner.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); }
+code { font-family: ui-monospace, Consolas, monospace; font-size: 13px; overflow-wrap: anywhere; }
+pre { margin: 0; max-height: 280px; overflow: auto; font: 12px/1.5 ui-monospace, Consolas, monospace; white-space: pre-wrap; color: var(--muted); }

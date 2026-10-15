@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from pmail import archive, bridge, message, settings
+from pmail import archive, bridge, lock, message, settings
 
 ALL_MAIL = "All Mail"
 SKIP_FOLDERS = {ALL_MAIL, "Starred"}  # Starred is a flag, not a place
@@ -35,6 +35,11 @@ def _flags(raw_flags) -> list[str]:
 
 
 def run(log=print) -> dict:
+    with lock.archive_lock():
+        return _run(log)
+
+
+def _run(log) -> dict:
     if warning := archive.cloud_synced_warning():
         log(warning)
     state = archive.load_state()

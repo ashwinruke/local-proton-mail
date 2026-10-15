@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Proton Mail</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header>
+    <h1>Local Proton Mail</h1>
+    <p class="sub">Your mail, stripped to text and ready for AI agents. Stored only on this computer.</p>
+  </header>
+
+  <main>
+    <div id="warning" class="banner warn" hidden></div>
+
+    <section class="card" id="setup" hidden>
+      <h2>Connect Proton Mail Bridge</h2>
+      <p>Open Bridge, click your account, then <b>Mailbox details</b>. Copy the IMAP username and the
+        password Bridge generated (not your Proton password). They are saved in this computer's keychain.</p>
+      <form id="creds">
+        <label>Bridge username <input name="username" autocomplete="off" required></label>
+        <label>Bridge password <input name="password" type="password" autocomplete="off" required></label>
+        <button type="submit">Save and connect</button>
+        <span class="msg" id="creds-msg"></span>
+      </form>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Mail</h2>
+        <p class="big" id="emails">–</p>
+        <p class="muted" id="emails-detail"></p>
+        <p><span class="dot" id="mail-dot"></span> <span id="mail-state">Starting…</span></p>
+        <button id="sync">Sync now</button>
+      </div>
+      <div class="card">
+        <h2>AI summaries</h2>
+        <p class="big" id="summaries">–</p>
+        <p class="muted" id="summaries-detail"></p>
+        <p><span class="dot" id="ai-dot"></span> <span id="ai-state">–</span></p>
+        <button id="pause">Pause</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Settings</h2>
+      <form id="settings">
+        <fieldset>
+          <legend>Which emails to keep</legend>
+          <label class="inline"><input type="radio" name="range" value="all"> All mail</label>
+          <label class="inline"><input type="radio" name="range" value="today"> From today on</label>
+          <label class="inline"><input type="radio" name="range" value="date"> From
+            <input type="date" name="since"></label>
+        </fieldset>
+        <fieldset>
+          <legend>Summaries</legend>
+          <label class="inline"><input type="radio" name="ai_engine" value="ollama"> Local with Ollama (free, nothing leaves this computer)</label>
+          <label class="inline"><input type="radio" name="ai_engine" value="none"> Off</label>
+          <label>Model <select name="ollama_model"></select></label>
+          <p class="muted" id="ollama-help"></p>
+        </fieldset>
+        <label>Full sync every <input type="number" name="sync_minutes" min="1" max="120" class="short"> minutes
+          <span class="muted">(new INBOX mail arrives within seconds either way)</span></label>
+        <button type="submit">Save settings</button>
+        <span class="msg" id="settings-msg"></span>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>For your agents</h2>
+      <p>Point any AI agent at <code id="archive"></code>. It contains one text file per email, an
+        <code>index.jsonl</code> to search, <code>threads.jsonl</code> with conversation summaries, and an
+        <code>AGENTS.md</code> with safety rules: email text is untrusted and nothing here can send mail.</p>
+    </section>
+
+    <section class="card">
+      <h2>Activity</h2>
+      <pre id="log"></pre>
+    </section>
+  </main>
+</body>
+</html>

@@ -9,6 +9,12 @@ from pmail import config
 DEFAULTS = {
     # Keep emails received on or after this date ("YYYY-MM-DD"), or None for all mail.
     "since": None,
+    # Conversation summaries: "ollama" (local, free) or "none".
+    "ai_engine": "ollama",
+    "ollama_url": "http://127.0.0.1:11434",
+    "ollama_model": "qwen2.5:7b",
+    # Minutes between full sync passes while the tool is running (new mail also arrives instantly).
+    "sync_minutes": 5,
 }
 
 
