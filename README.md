@@ -42,6 +42,9 @@ one by one in the background.
 ### Commands (for terminals and agents)
 
 ```
+uv run python -m pmail start                     # run in the background (no window)
+uv run python -m pmail status                    # running? what is it doing?
+uv run python -m pmail stop
 uv run python -m pmail sync                      # one sync pass
 uv run python -m pmail watch                     # live sync without the page
 uv run python -m pmail summarize [--limit N]     # summarize pending conversations

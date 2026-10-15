@@ -129,3 +129,13 @@ def test_page_settings_validate(page):
     assert status["settings"]["since"] == "2026-01-31"
     assert status["settings"]["sync_minutes"] == 120
     assert _req(f"{page}/api/settings", "POST", headers, {"ai_engine": "cloud"})[0] == 400
+
+
+def test_status_text_for_agents():
+    from pmail import control
+    assert "pmail start" in control.describe(None)
+    running = {"service": {"mail": "watching", "mail_error": "", "last_sync": "2026-10-14T19:00:00", "ai": "idle",
+                           "ai_error": "", "ai_current": ""},
+               "counts": {"emails": 10, "summarized": 2, "threads": 3}, "archive": "/tmp/archive"}
+    text = control.describe(running)
+    assert "live, watching for new mail" in text and "2 of 3" in text

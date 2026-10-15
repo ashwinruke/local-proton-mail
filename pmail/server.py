@@ -129,6 +129,10 @@ def make_handler(service: Service, port: int):
             if path == "/api/sync":
                 service.sync_now()
                 return {"ok": True}
+            if path == "/api/shutdown":
+                service.stop()
+                threading.Thread(target=self.server.shutdown, daemon=True).start()
+                return {"ok": True}
             if path == "/api/ai":
                 service.pause_ai(bool(body.get("paused")))
                 return {"ok": True}
@@ -138,9 +142,15 @@ def make_handler(service: Service, port: int):
 
 
 def serve(port: int = PORT, open_browser: bool = True) -> None:
-    service = Service()
-    httpd = ThreadingHTTPServer(("127.0.0.1", port), make_handler(service, port))
     url = f"http://127.0.0.1:{port}"
+    service = Service()
+    try:
+        httpd = ThreadingHTTPServer(("127.0.0.1", port), make_handler(service, port))
+    except OSError:  # already running (started by an agent or another window): just show it
+        print(f"local-proton-mail is already running at {url}")
+        if open_browser:
+            webbrowser.open(url)
+        return
     print(f"local-proton-mail is running at {url}  (close this window or press Ctrl+C to stop)")
     service.start()
     if open_browser:

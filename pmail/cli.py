@@ -55,6 +55,25 @@ def cmd_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_start(args: argparse.Namespace) -> int:
+    from pmail import control
+    print(control.start())
+    return 0
+
+
+def cmd_stop(args: argparse.Namespace) -> int:
+    from pmail import control
+    print(control.stop())
+    return 0
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    from pmail import control
+    s = control.status()
+    print(control.describe(s))
+    return 0 if s else 1
+
+
 def cmd_serve(args: argparse.Namespace) -> int:
     from pmail import server
     server.serve(port=args.port, open_browser=not args.no_browser)
@@ -107,6 +126,9 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("summarize", help="summarize personal conversations with the local AI model (resumable)")
     p.add_argument("--limit", type=int, help="stop after this many conversations")
     p.set_defaults(func=cmd_summarize)
+    sub.add_parser("start", help="start the app in the background (live sync + summaries)").set_defaults(func=cmd_start)
+    sub.add_parser("stop", help="stop the background app").set_defaults(func=cmd_stop)
+    sub.add_parser("status", help="is it running, and what is it doing").set_defaults(func=cmd_status)
     p = sub.add_parser("serve", help="open the local page and keep mail and summaries in sync while it runs")
     p.add_argument("--port", type=int, default=7861)
     p.add_argument("--no-browser", action="store_true")

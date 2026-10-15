@@ -53,7 +53,7 @@ Rules:
 - Keep every list item to one short line. Lists may be empty.
 - Respond with JSON matching the schema."""
 
-SKIP_FOLDERS = {"Spam", "Trash"}
+SKIP_FOLDERS = {"Spam", "Trash", "Drafts"}
 MAX_CHARS = 24_000  # keeps a thread inside an 8k-token context on small local models
 
 
